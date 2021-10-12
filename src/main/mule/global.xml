@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:sfdc-marketing-cloud="http://www.mulesoft.org/schema/mule/sfdc-marketing-cloud"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sfdc-marketing-cloud http://www.mulesoft.org/schema/mule/sfdc-marketing-cloud/current/mule-sfdc-marketing-cloud.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+<configuration-properties doc:name="Configuration properties" doc:id="a0ad4b89-8749-4219-bb64-fe2c16cf9891" file="app-DEV.properties" />
+	<sfdc-marketing-cloud:config name="Salesforce_Marketing_Cloud_Config" doc:name="Salesforce Marketing Cloud Config" doc:id="7269cc52-b11b-403a-b0e2-bcd5d94936c3" >
+		<sfdc-marketing-cloud:oauth-client-credentials-connection serviceUrl="https://${sfmc.domain}.soap.marketingcloudapis.com/Service.asmx" wsdlUrl="https://${sfmc.domain}.soap.marketingcloudapis.com/etframework.wsdl" connectionTimeout="60">
+			<reconnection >
+				<reconnect count="5"/>
+			</reconnection>
+			<sfdc-marketing-cloud:oauth-client-credentials clientId="${sfmc.clientId}" clientSecret="${sfmc.clientSecret}" tokenUrl="https://${sfmc.domain}.auth.marketingcloudapis.com/v2/token" scopes="offline documents_and_images_read documents_and_images_write saved_content_read saved_content_write automations_execute automations_read automations_write journeys_execute journeys_read journeys_write email_read email_send email_write push_read push_send push_write sms_read sms_send sms_write social_post social_publish social_read social_write web_publish web_read web_write audiences_read audiences_write list_and_subscribers_read list_and_subscribers_write data_extensions_read data_extensions_write file_locations_read file_locations_write tracking_events_read calendar_read calendar_write campaign_read campaign_write accounts_read accounts_write users_read users_write webhooks_read webhooks_write workflows_write approvals_write tags_write approvals_read tags_read workflows_read ott_chat_messaging_read ott_chat_messaging_send ott_channels_read ott_channels_write marketing_cloud_connect_read marketing_cloud_connect_write marketing_cloud_connect_send event_notification_callback_create event_notification_callback_read event_notification_callback_update event_notification_callback_delete event_notification_subscription_create event_notification_subscription_read event_notification_subscription_update event_notification_subscription_delete tracking_events_write key_manage_view key_manage_rotate key_manage_revoke dfu_configure journeys_aspr journeys_delete"/>
+		</sfdc-marketing-cloud:oauth-client-credentials-connection>
+	</sfdc-marketing-cloud:config>
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="32608e09-d591-440c-84c1-fd1495948484" >
+		<sftp:connection workingDir="/export" host="${sftp.host}" username="${sfmc.mid}" password="${sftp.password}" identityFile="${sftp.keyPath}" port="${sftp.port}" connectionTimeout="60" responseTimeout="60">
+			<reconnection >
+				<reconnect count="10" />
+			</reconnection>
+		</sftp:connection>
+	</sftp:config>
+	
+</mule>

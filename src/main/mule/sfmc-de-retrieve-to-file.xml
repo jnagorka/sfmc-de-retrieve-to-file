@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:accelerator-salesforce-marketing-system-api="http://www.mulesoft.org/schema/mule/accelerator-salesforce-marketing-system-api"
+	xmlns:sfdc-marketing-cloud="http://www.mulesoft.org/schema/mule/sfdc-marketing-cloud" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sfdc-marketing-cloud http://www.mulesoft.org/schema/mule/sfdc-marketing-cloud/current/mule-sfdc-marketing-cloud.xsd
+http://www.mulesoft.org/schema/mule/accelerator-salesforce-marketing-system-api http://www.mulesoft.org/schema/mule/accelerator-salesforce-marketing-system-api/current/mule-accelerator-salesforce-marketing-system-api.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+	<flow name="Main" doc:id="69e57cfa-ed44-4fa6-b989-5f802a51d1ac" initialState="started" maxConcurrency="1">
+		<scheduler doc:name="Scheduler" doc:id="97b913e9-d3cf-4c86-b3dd-6dd784bfba92" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="DAYS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="Set Retrieve Options" doc:id="9293e549-f083-4dd0-8473-b0d393aceb0c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="retrieveOptions" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	BatchSize: 2500
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Set Data Extension Query" doc:id="0fe84a16-df59-4b04-a9dc-6028a8d1f10e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="query" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Query: "select _CustomObjectKey, ClientID, SendID, SubscriberKey, EmailAddress, SubscriberID, ListID, EventDate, EventType, BatchID, TriggeredSendExternalKey from 'DataExtensionObject[Tracking_Sent2]'"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<sfdc-marketing-cloud:retrieve doc:name="Retrieve DE entities" doc:id="4ab7f8b5-9421-43ed-8c0f-fe0c74bd9876" config-ref="Salesforce_Marketing_Cloud_Config" retrieveOptions="#[vars.retrieveOptions]">
+			<reconnect count="5" />
+			<sfdc-marketing-cloud:query ><![CDATA[#[vars.query.Query]]]></sfdc-marketing-cloud:query>
+		</sfdc-marketing-cloud:retrieve>
+		<logger level="INFO" doc:name="Logger" doc:id="75a161a3-5840-4c59-a06f-0baa009c220c" message="Fetched #[sizeOf(payload)] rows" />
+		<ee:transform doc:name="Format for CSV" doc:id="41a45730-88f5-4749-9a17-15a5b9c13dea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/csv
+header=true, quoteHeader=true, separator=",", quoteValues=true, quote="\"", escape="\\", encoding="UTF-8"
+---
+payload map (prop, idx) -> {
+	(prop.Properties.Property[0].Name): prop.Properties.Property[0].Value,
+	(prop.Properties.Property[1].Name): prop.Properties.Property[1].Value,
+    (prop.Properties.Property[2].Name): prop.Properties.Property[2].Value,
+    (prop.Properties.Property[3].Name): prop.Properties.Property[3].Value,
+    (prop.Properties.Property[4].Name): prop.Properties.Property[4].Value,
+    (prop.Properties.Property[5].Name): prop.Properties.Property[5].Value,
+    (prop.Properties.Property[6].Name): prop.Properties.Property[6].Value,
+    (prop.Properties.Property[7].Name): prop.Properties.Property[7].Value,
+    (prop.Properties.Property[8].Name): prop.Properties.Property[8].Value,
+    (prop.Properties.Property[9].Name): prop.Properties.Property[9].Value,
+    (prop.Properties.Property[10].Name): prop.Properties.Property[10].Value,
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<sftp:write doc:name="Write CSV to SFTP" doc:id="d9d372c2-dcbb-4b24-bd2b-f15de3a0ea5b" config-ref="SFTP_Config" path="/Export/mule-test.csv">
+			<reconnect count="10" />
+		</sftp:write>
+		<logger level="INFO" doc:name="Done" doc:id="73eb2ec3-89ff-41a8-88f1-b59c17a10c21" message="Done"/>
+	</flow>
+</mule>
